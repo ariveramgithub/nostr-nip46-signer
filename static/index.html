@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nostr NIP-46 Signer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #7c3aed;
+      --primary-hover: #6d28d9;
+      --success: #22c55e;
+      --mono: monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      padding: 36px 20px;
+      font-size: 1.05rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+
+    header h1 { font-size: 1.7rem; font-weight: 700; }
+    header p { font-size: 1.05rem; color: var(--muted); margin-top: 4px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .dot.online { background: var(--success); }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+    }
+
+    .card h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 1rem;
+    }
+
+    button, .btn {
+      background: #334155;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+    }
+
+    button:hover, .btn:hover {
+      background: #475569;
+    }
+
+    button.primary, .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+    button.primary:hover, .btn.primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .uri-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      word-break: break-all;
+      margin-bottom: 14px;
+    }
+
+    .logs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: var(--mono);
+      font-size: 0.92rem;
+    }
+
+    .log-item {
+      background: var(--bg);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      word-break: break-word;
+    }
+    .log-item.success { border-left-color: var(--success); }
+
+    /* Diseño responsivo para pantallas móviles y tablets */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px 12px;
+        font-size: 0.98rem;
+      }
+
+      .container {
+        gap: 16px;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding-bottom: 16px;
+      }
+
+      header h1 {
+        font-size: 1.35rem;
+      }
+
+      header p {
+        font-size: 0.92rem;
+      }
+
+      .badge {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+      }
+
+      .card {
+        padding: 16px 14px;
+        border-radius: 10px;
+      }
+
+      .card h2 {
+        font-size: 1.15rem;
+        margin-bottom: 12px;
+      }
+
+      .row {
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 0.92rem;
+      }
+
+      button, .btn {
+        width: 100%;
+        padding: 11px 16px;
+        font-size: 0.95rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .uri-box {
+        font-size: 0.85rem;
+        padding: 12px;
+        line-height: 1.5;
+      }
+
+      .logs {
+        font-size: 0.85rem;
+        max-height: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>🔐 Nostr NIP-46 Remote Signer</h1>
+        <p>Firmante remoto mínimo para autenticación en Stacker News</p>
+      </div>
+      <div class="badge">
+        <span id="relay-dot" class="dot"></span>
+        <span id="relay-status">Conectando...</span>
+      </div>
+    </header>
+
+    <!-- 1. CLAVE SECRETA -->
+    <section class="card">
+      <h2>1. Clave Secreta de Nostr (nsec)</h2>
+
+      <label>Ingresar clave secreta existente (nsec1... o hex) o crear una nueva:</label>
+      <div class="row">
+        <input type="password" id="import-input" placeholder="Pegar nsec1..." />
+        <button onclick="loadKey()">Guardar Clave</button>
+        <button class="primary" onclick="generateKey()">Crear Nueva Clave</button>
+      </div>
+
+      <label>Clave secreta activa (custodiada en el firmante):</label>
+      <div class="row">
+        <input type="password" id="nsec-current" readonly />
+        <button onclick="toggleNsec()" id="toggle-btn">Mostrar</button>
+      </div>
+
+      <label>Clave pública asociada (npub):</label>
+      <div class="row" style="margin-bottom:0;">
+        <input type="text" id="npub-current" readonly />
+      </div>
+    </section>
+
+    <!-- 2. CONEXIÓN NIP-46 CON STACKER NEWS -->
+    <section class="card">
+      <h2>2. Iniciar Sesión en Stacker News (NIP-46)</h2>
+      <label>Copie esta URI <code>bunker://</code> y péguela en el campo <em>"Connect with token or NIP-05 address"</em> de Stacker News:</label>
+      <div class="uri-box" id="bunker-uri">Cargando...</div>
+      <div class="row" style="margin-bottom:0;">
+        <button class="primary" onclick="copyBunkerUri()" id="copy-btn">Copiar URI bunker://</button>
+        <a
+          class="btn"
+          href="https://stacker.news/signup?callbackUrl=https%3A%2F%2Fstacker.news%2F&type=nostr"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Abrir Stacker News ↗
+        </a>
+      </div>
+    </section>
+
+    <!-- 3. REGISTRO DE FIRMAS -->
+    <section class="card">
+      <h2>3. Actividad NIP-46 en Vivo (<span id="signed-count">0</span> eventos firmados)</h2>
+      <div id="logs" class="logs"></div>
+    </section>
+  </div>
+
+  <script>
+    let currentUri = "";
+    let showSecret = false;
+
+    function toggleNsec() {
+      showSecret = !showSecret;
+      document.getElementById("nsec-current").type = showSecret ? "text" : "password";
+      document.getElementById("toggle-btn").textContent = showSecret ? "Ocultar" : "Mostrar";
+    }
+
+    async function generateKey() {
+      await fetch("/api/identity/generate", { method: "POST" });
+      await refresh();
+    }
+
+    async function loadKey() {
+      const input = document.getElementById("import-input");
+      const key = input.value.trim();
+      if (!key) return;
+      const res = await fetch("/api/identity/load", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.detail || "Clave inválida");
+        return;
+      }
+      input.value = "";
+      await refresh();
+    }
+
+    async function copyBunkerUri() {
+      if (!currentUri) return;
+      await navigator.clipboard.writeText(currentUri);
+      const btn = document.getElementById("copy-btn");
+      btn.textContent = "¡Copiado!";
+      setTimeout(() => (btn.textContent = "Copiar URI bunker://"), 1500);
+    }
+
+    async function refresh() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+
+        document.getElementById("nsec-current").value = data.nsec || "";
+        document.getElementById("npub-current").value = data.npub || "";
+        currentUri = data.bunker_uri || "";
+        document.getElementById("bunker-uri").textContent = currentUri;
+        document.getElementById("signed-count").textContent = data.signed_events_count || 0;
+
+        const rs = data.relay_status || { connected_count: 0, total_relays: 0 };
+        const dot = document.getElementById("relay-dot");
+        dot.className = rs.connected_count > 0 ? "dot online" : "dot";
+        document.getElementById("relay-status").textContent =
+          `Relays NIP-46: ${rs.connected_count}/${rs.total_relays}`;
+
+        const logsEl = document.getElementById("logs");
+        const logs = data.logs || [];
+        logsEl.innerHTML = logs
+          .map(
+            (l) =>
+              `<div class="log-item ${l.level}">[${l.iso_time}] <strong>${l.action}</strong>: ${l.message}</div>`
+          )
+          .join("");
+      } catch (_) {}
+    }
+
+    refresh();
+    setInterval(refresh, 2000);
+  </script>
+</body>
+</html>

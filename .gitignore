@@ -1,0 +1,27 @@
+# Entorno virtual de Python
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / cachés de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing y cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Variables de entorno y llaves locales
+.env
+.env.local
+*.key
+
+# Archivos de sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
